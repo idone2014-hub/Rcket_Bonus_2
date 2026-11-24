@@ -1,4 +1,4 @@
-QMainWindow {
+QMainWindow#mainWindow {
     background-color: #f4f6fa;
 }
 
@@ -6,8 +6,8 @@ QWidget#contentArea {
     background-color: #f4f6fa;
 }
 
-QFrame#sidebar {
-    background-color: #17233b;
+QWidget#sidebar {
+    background-color: #0f172a;
     border: none;
 }
 
@@ -34,8 +34,8 @@ QLabel#sectionLabel {
 }
 
 QPushButton#navButton {
-    color: #c8d1e0;
-    background-color: transparent;
+    color: #cbd5e1;
+    background-color: #1e293b;
     border: 1px solid transparent;
     border-radius: 8px;
     padding: 9px 11px;
@@ -46,7 +46,7 @@ QPushButton#navButton {
 
 QPushButton#navButton:hover {
     color: #ffffff;
-    background-color: #243552;
+    background-color: #334155;
 }
 
 QPushButton#navButton:checked,
@@ -59,9 +59,9 @@ QPushButton#navButton:focus {
 }
 
 QPushButton#aboutButton {
-    color: #d3dced;
-    background-color: #243552;
-    border: 1px solid #344562;
+    color: #e2e8f0;
+    background-color: #1e293b;
+    border: 1px solid #334155;
     border-radius: 8px;
     padding: 9px 12px;
     text-align: left;
@@ -69,10 +69,12 @@ QPushButton#aboutButton {
 }
 
 QPushButton#aboutButton:hover {
-    background-color: #304566;
+    color: #ffffff;
+    background-color: #334155;
 }
 
 QPushButton#aboutButton:pressed,
+QPushButton#aboutButton:checked,
 QPushButton#aboutButton:focus {
     color: #ffffff;
     background-color: #3977e8;
@@ -109,7 +111,7 @@ QLabel#aboutDescription {
     line-height: 1.4;
 }
 
-QLabel a {
+QLabel#repositoryLink a {
     color: #3977e8;
 }
 
@@ -124,35 +126,100 @@ QPushButton#secondaryButton {
 
 QPushButton#secondaryButton:hover,
 QPushButton#secondaryButton:pressed,
+QPushButton#secondaryButton:checked,
 QPushButton#secondaryButton:focus {
     color: #ffffff;
     background-color: #3977e8;
     border-color: #3977e8;
 }
 
-QToolBar {
+QToolBar#plotToolbar {
     background-color: #ffffff;
     border: none;
     spacing: 5px;
 }
 
-QToolBar QToolButton {
-    background-color: transparent;
-    border: 1px solid transparent;
-    border-radius: 5px;
+QToolBar#plotToolbar QToolButton {
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
     padding: 4px;
     min-width: 28px;
     min-height: 28px;
-    icon-size: 16px;
 }
 
-QToolBar QToolButton:hover {
-    background-color: #edf2fa;
+QToolBar#plotToolbar QToolButton:hover {
+    background-color: #e2e8f0;
 }
 
-QToolBar QToolButton:checked,
-QToolBar QToolButton:pressed,
-QToolBar QToolButton:focus {
+QToolBar#plotToolbar QToolButton:checked {
+    color: #ffffff;
     background-color: #3977e8;
     border-color: #2e68d1;
+}
+
+QDialog {
+    color: #0f172a;
+    background-color: #ffffff;
+}
+
+QDialog QLabel {
+    color: #0f172a;
+    background-color: transparent;
+}
+
+QDialog QLineEdit,
+QDialog QComboBox,
+QDialog QSpinBox,
+QDialog QDoubleSpinBox {
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 3px 5px;
+    selection-color: #ffffff;
+    selection-background-color: #3977e8;
+}
+
+QDialog QComboBox QAbstractItemView {
+    color: #0f172a;
+    background-color: #ffffff;
+    selection-color: #ffffff;
+    selection-background-color: #3977e8;
+}
+
+QDialog QCheckBox {
+    color: #0f172a;
+    background-color: transparent;
+}
+
+QDialog QPushButton {
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 3px;
+    padding: 4px 10px;
+}
+
+QDialog QPushButton:hover,
+QDialog QPushButton:pressed {
+    color: #0f172a;
+    background-color: #e2e8f0;
+}
+
+QDialog QTabWidget::pane {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+}
+
+QDialog QTabBar::tab {
+    color: #0f172a;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 5px 9px;
+}
+
+QDialog QTabBar::tab:selected {
+    background-color: #ffffff;
 }

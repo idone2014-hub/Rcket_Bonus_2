@@ -1,8 +1,9 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
+from matplotlib.figure import Figure
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
     QHBoxLayout,
@@ -190,7 +191,13 @@ class AboutWindow(QWidget):
         description.setWordWrap(True)
         description.setStyleSheet("font-size: 13px; color: #475569;")
 
-        repository = QLabel("https://github.com/idone2014-hub/Rcket_Bonus_2")
+        repository = QLabel(
+            '<a href="https://github.com/idone2014-hub/Rcket_Bonus_2">'
+            "https://github.com/idone2014-hub/Rcket_Bonus_2</a>"
+        )
+        repository.setObjectName("repositoryLink")
+        repository.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        repository.setOpenExternalLinks(True)
         repository.setStyleSheet("font-size: 12px; color: #3977e8; font-weight: bold;")
 
         close_button = QPushButton("Close")
@@ -220,6 +227,7 @@ class RocketTrajectoryWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setObjectName("mainWindow")
         self.about_window = AboutWindow()
 
         self.GRAPH_KEYS = ["altitude", "distance", "trajectory", "velocity", "mass"]
@@ -273,6 +281,7 @@ class RocketTrajectoryWindow(QMainWindow):
 
         # ----- Sidebar -----
         sidebar = QWidget()
+        sidebar.setObjectName("sidebar")
         sidebar.setStyleSheet("background-color: #0f172a;")
 
         brand = QLabel("ORBITAL")
@@ -312,6 +321,7 @@ class RocketTrajectoryWindow(QMainWindow):
 
         # ----- Content Area -----
         content = QWidget()
+        content.setObjectName("contentArea")
         content.setStyleSheet("background-color: #f4f6fa;")
 
         page_title = QLabel("Flight analysis")
@@ -328,9 +338,12 @@ class RocketTrajectoryWindow(QMainWindow):
             "background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;"
         )
 
-        self.fig, self.ax = plt.subplots(1, 1)
+        self.fig = Figure()
+        self.ax = self.fig.add_subplot(111)
         self.canvas = FigureCanvasQTAgg(self.fig)
+        self.canvas.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.toolbar = NavigationToolbar2QT(self.canvas, chart_box)
+        self.toolbar.setObjectName("plotToolbar")
 
         chart_layout = QVBoxLayout()
         chart_layout.setContentsMargins(12, 12, 12, 12)
@@ -391,12 +404,16 @@ class RocketTrajectoryWindow(QMainWindow):
         self.ax.set_xlim(left=0)
         self.ax.set_ylim(bottom=0)
         self.canvas.draw()
+        self.toolbar.update()
+        self.toolbar.push_current()
 
         for key in self.GRAPH_KEYS:
             self.navigation_buttons[key].setChecked(key == graph_type)
 
     def show_about_window(self):
         self.about_window.show()
+        self.about_window.raise_()
+        self.about_window.activateWindow()
 
     def closeEvent(self, event):
         self.about_window.close()
