@@ -1,21 +1,8 @@
-"""PySide6 interface for a rocket-propulsion trajectory assignment.
-
-The calculation functions in this module are intentional placeholders. Replace
-their TODO sections with the assignment's physics and numerical methods.
-"""
-
-import math
-import os
-import sys
-
+import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
-from matplotlib.figure import Figure
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
-    QDialog,
-    QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -26,7 +13,6 @@ from PySide6.QtWidgets import (
 
 
 def calculate_atmosphere(h):
-    """חישוב טמפרטורה, לחץ וצפיפות אוויר כפונקציה של הגובה h במטרים."""
     g0 = 9.81
     R = 287.0
 
@@ -42,9 +28,8 @@ def calculate_atmosphere(h):
         else:
             T = 139.7 + 2.7661 * h_km
 
-        P_atm = math.exp((-g0 * (h - 1000.0)) / (R * T))
+        P_atm = np.exp((-g0 * (h - 1000.0)) / (R * T))
 
-    # המרת לחץ מאטמוספירות לפסקל וחישוב צפיפות
     P_pa = P_atm * 101325.0
     rho = P_pa / (R * T)
     return T, P_atm, rho
@@ -62,32 +47,27 @@ def calculate_single_step(
     tb=7.0,
     dt=0.5,
 ):
-    """סעיף א': חישוב מצב הטיל לאחר צעד יחיד של 0.5 שניות לפי נתוני ההתחלה."""
     g0 = 9.81
     R = 287.0
     gamma = 1.4
 
-    # תנאי התחלה
     T0, P0, rho0 = calculate_atmosphere(h0)
-    a0 = math.sqrt(gamma * R * T0)
+    a0 = np.sqrt(gamma * R * T0)
     v0 = M * a0
 
-    theta_rad = math.radians(theta)
-    vx0 = v0 * math.cos(theta_rad)
-    vy0 = v0 * math.sin(theta_rad)
+    theta_rad = theta * np.pi / 180.0
+    vx0 = v0 * np.cos(theta_rad)
+    vy0 = v0 * np.sin(theta_rad)
 
-    # כוחות ברגע ההתחלה
     thrust = Isp * m_dot * g0
     drag = 0.5 * rho0 * (v0**2) * CD * Af
 
-    # תאוצות
-    ax = ((thrust - drag) * math.cos(theta_rad)) / m0
-    ay = ((thrust - drag) * math.sin(theta_rad)) / m0 - g0
+    ax = ((thrust - drag) * np.cos(theta_rad)) / m0
+    ay = ((thrust - drag) * np.sin(theta_rad)) / m0 - g0
 
-    # עדכון לאחר צעד יחיד dt = 0.5 s
     vx = vx0 + ax * dt
     vy = vy0 + ay * dt
-    v = math.sqrt(vx**2 + vy**2)
+    v = np.sqrt(vx**2 + vy**2)
     x = vx0 * dt
     h = h0 + vy0 * dt
     m = m0 - m_dot * dt
@@ -115,39 +95,38 @@ def simulate_trajectory(
     tb=7.0,
     dt=0.01,
 ):
-    """סעיף ב': חישוב מסלול הטיל באמצעות לולאת while עד הפגיעה בקרקע."""
     g0 = 9.81
     R = 287.0
     gamma = 1.4
 
-    # תנאי התחלה ברגע t = 0
     T0, P0, rho0 = calculate_atmosphere(h0)
-    a0 = math.sqrt(gamma * R * T0)
+    a0 = np.sqrt(gamma * R * T0)
     v0 = M * a0
 
-    theta_rad = math.radians(theta)
-    vx = v0 * math.cos(theta_rad)
-    vy = v0 * math.sin(theta_rad)
+    theta_rad = theta * np.pi / 180.0
+    vx = v0 * np.cos(theta_rad)
+    vy = v0 * np.sin(theta_rad)
 
     t = 0.0
     h = h0
     x = 0.0
     m = m0
+    max_h = h0
 
-    # רשימות לשמירת הנתונים לאורך המסלול
     times = [t]
     altitudes = [h]
     distances = [x]
     velocities = [v0]
     masses = [m]
 
-    # לולאת while הרצה כל עוד הטיל באוויר (h > 0)
-    while h > 0 and t < 1000.0:
-        v = math.sqrt(vx**2 + vy**2)
+    for step in range(100000):
+        if h <= 0:
+            break
+
+        v = np.sqrt(vx**2 + vy**2)
         T, P_atm, rho = calculate_atmosphere(h)
 
-        # בדיקה האם המנוע עדיין בוער או שכבר כבה
-        if round(t, 6) < tb:
+        if t < tb - 0.000001:
             thrust = Isp * m_dot * g0
             dm = m_dot * dt
         else:
@@ -156,11 +135,9 @@ def simulate_trajectory(
 
         drag = 0.5 * rho * (v**2) * CD * Af
 
-        # כיוון הדחף והגרר הוא לאורך וקטור המהירות (cos = vx/v, sin = vy/v)
         ax = ((thrust - drag) * (vx / v)) / m
         ay = ((thrust - drag) * (vy / v)) / m - g0
 
-        # נתוני סיום הצעד יהוו את נתוני ההתחלה לצעד הבא
         x = x + vx * dt
         h = h + vy * dt
         vx = vx + ax * dt
@@ -168,7 +145,10 @@ def simulate_trajectory(
         m = m - dm
         t = t + dt
 
-        v_new = math.sqrt(vx**2 + vy**2)
+        if h > max_h:
+            max_h = h
+
+        v_new = np.sqrt(vx**2 + vy**2)
 
         times.append(t)
         altitudes.append(h)
@@ -182,178 +162,218 @@ def simulate_trajectory(
         "x": np.array(distances),
         "v": np.array(velocities),
         "m": np.array(masses),
+        "max_h": max_h,
     }
 
 
-class AboutDialog(QDialog):
-    """חלון מידע על הפרויקט עם קישור ל-GitHub."""
+class AboutWindow(QWidget):
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
         self.setWindowTitle("About Rocket Trajectory")
-        self.setModal(True)
-        self.setMinimumWidth(390)
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(26, 24, 26, 22)
-        layout.setSpacing(12)
+        self.setGeometry(480, 260, 410, 220)
+        self.setStyleSheet("background-color: #ffffff;")
 
         heading = QLabel("Rocket Propulsion")
-        heading.setObjectName("aboutHeading")
-        layout.addWidget(heading)
+        heading.setStyleSheet("font-size: 20px; font-weight: bold; color: #0f172a;")
 
         description = QLabel(
             "Trajectory simulation assignment interface\n"
             "Interactive plots for altitude, distance, trajectory, velocity, "
             "and rocket mass."
         )
-        description.setObjectName("aboutDescription")
         description.setWordWrap(True)
-        layout.addWidget(description)
+        description.setStyleSheet("font-size: 13px; color: #475569;")
 
-        repository = QLabel(
-            '<a href="https://github.com/idone2014-hub/Rcket_Bonus_2">'
-            "View project repository</a>"
-        )
-        repository.setOpenExternalLinks(True)
-        repository.setTextInteractionFlags(Qt.TextBrowserInteraction)
-        layout.addWidget(repository)
+        repository = QLabel("https://github.com/idone2014-hub/Rcket_Bonus_2")
+        repository.setStyleSheet("font-size: 12px; color: #3977e8; font-weight: bold;")
 
         close_button = QPushButton("Close")
-        close_button.setObjectName("secondaryButton")
-        close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button, alignment=Qt.AlignRight)
+        close_button.setStyleSheet(
+            "background-color: #e2e8f0; color: #0f172a; font-weight: bold; "
+            "padding: 8px 18px; border-radius: 6px;"
+        )
+        close_button.clicked.connect(self.close_clicked)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(close_button)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(26, 24, 26, 22)
+        layout.setSpacing(12)
+        layout.addWidget(heading)
+        layout.addWidget(description)
+        layout.addWidget(repository)
+        layout.addStretch()
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def close_clicked(self):
+        self.hide()
 
 
 class RocketTrajectoryWindow(QMainWindow):
-    """החלון הראשי המציג את תפריט הגרפים ואת הגרף האינטראקטיבי."""
-
-    GRAPHS = {
-        "altitude": {
-            "button": "Altitude vs. Time",
-            "title": "Altitude vs. Time",
-            "xlabel": "Time, t [s]",
-            "ylabel": "Altitude, h [m]",
-        },
-        "distance": {
-            "button": "Horizontal Distance vs. Time",
-            "title": "Horizontal Distance vs. Time",
-            "xlabel": "Time, t [s]",
-            "ylabel": "Horizontal distance, x [m]",
-        },
-        "trajectory": {
-            "button": "Rocket Trajectory",
-            "title": "Rocket Trajectory (h vs. x)",
-            "xlabel": "Horizontal distance, x [m]",
-            "ylabel": "Altitude, h [m]",
-        },
-        "velocity": {
-            "button": "Velocity vs. Time",
-            "title": "Velocity vs. Time",
-            "xlabel": "Time, t [s]",
-            "ylabel": "Velocity, v [m/s]",
-        },
-        "mass": {
-            "button": "Rocket Mass vs. Time",
-            "title": "Rocket Mass vs. Time",
-            "xlabel": "Time, t [s]",
-            "ylabel": "Rocket mass, m [kg]",
-        },
-    }
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Rocket Propulsion | Trajectory Simulator")
-        self.resize(1180, 760)
-        self.setMinimumSize(900, 600)
+        self.about_window = AboutWindow()
 
-        # הרצת החישובים של סעיף א' וסעיף ב' בעת עליית התוכנית
+        self.GRAPH_KEYS = ["altitude", "distance", "trajectory", "velocity", "mass"]
+        self.GRAPHS = {
+            "altitude": {
+                "button": "Altitude vs. Time",
+                "title": "Altitude vs. Time",
+                "xlabel": "Time, t [s]",
+                "ylabel": "Altitude, h [m]",
+            },
+            "distance": {
+                "button": "Horizontal Distance vs. Time",
+                "title": "Horizontal Distance vs. Time",
+                "xlabel": "Time, t [s]",
+                "ylabel": "Horizontal distance, x [m]",
+            },
+            "trajectory": {
+                "button": "Rocket Trajectory",
+                "title": "Rocket Trajectory (h vs. x)",
+                "xlabel": "Horizontal distance, x [m]",
+                "ylabel": "Altitude, h [m]",
+            },
+            "velocity": {
+                "button": "Velocity vs. Time",
+                "title": "Velocity vs. Time",
+                "xlabel": "Time, t [s]",
+                "ylabel": "Velocity, v [m/s]",
+            },
+            "mass": {
+                "button": "Rocket Mass vs. Time",
+                "title": "Rocket Mass vs. Time",
+                "xlabel": "Time, t [s]",
+                "ylabel": "Rocket mass, m [kg]",
+            },
+        }
+
         self.part_a = calculate_single_step()
         self.results = simulate_trajectory()
 
         print(f"Part A (t = 0.5 s): Velocity = {self.part_a['v']:.2f} m/s")
 
+        self.initUI()
+        self.plot_graph("altitude")
+
+    def initUI(self):
+        self.setWindowTitle("Rocket Propulsion | Trajectory Simulator")
+        self.resize(1180, 760)
+
         root = QWidget()
-        root_layout = QHBoxLayout(root)
-        root_layout.setContentsMargins(0, 0, 0, 0)
-        root_layout.setSpacing(0)
         self.setCentralWidget(root)
 
-        sidebar = QFrame()
-        sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(260)
-        sidebar_layout = QVBoxLayout(sidebar)
-        sidebar_layout.setContentsMargins(20, 26, 20, 22)
-        sidebar_layout.setSpacing(10)
+        # ----- Sidebar -----
+        sidebar = QWidget()
+        sidebar.setStyleSheet("background-color: #0f172a;")
 
         brand = QLabel("ORBITAL")
-        brand.setObjectName("brandLabel")
-        sidebar_layout.addWidget(brand)
+        brand.setStyleSheet("color: #ffffff; font-size: 22px; font-weight: bold;")
 
         subtitle = QLabel("ROCKET TRAJECTORY")
-        subtitle.setObjectName("sidebarSubtitle")
-        sidebar_layout.addWidget(subtitle)
+        subtitle.setStyleSheet("color: #64748b; font-size: 11px; font-weight: bold;")
 
         nav_heading = QLabel("VISUALIZATIONS")
-        nav_heading.setObjectName("sectionLabel")
+        nav_heading.setStyleSheet("color: #94a3b8; font-size: 11px; font-weight: bold;")
+
+        sidebar_layout = QVBoxLayout()
+        sidebar_layout.setContentsMargins(20, 26, 20, 22)
+        sidebar_layout.setSpacing(10)
+        sidebar_layout.addWidget(brand)
+        sidebar_layout.addWidget(subtitle)
         sidebar_layout.addWidget(nav_heading)
-        sidebar_layout.addSpacing(4)
+
+        nav_style = (
+            "QPushButton { background-color: #1e293b; color: #cbd5e1; font-size: 13px; "
+            "padding: 12px; border-radius: 8px; }"
+            "QPushButton:checked { background-color: #3977e8; color: #ffffff; "
+            "font-weight: bold; }"
+        )
 
         self.navigation_buttons = {}
-        for graph_type, graph in self.GRAPHS.items():
+        for graph_type in self.GRAPH_KEYS:
+            graph = self.GRAPHS[graph_type]
             button = QPushButton(graph["button"])
-            button.setObjectName("navButton")
             button.setCheckable(True)
-            button.setMinimumHeight(44)
-            button.clicked.connect(
-                lambda checked, selected=graph_type: self.plot_graph(selected)
-            )
+            button.setStyleSheet(nav_style)
+            button.clicked.connect(self.graph_button_clicked)
             sidebar_layout.addWidget(button)
             self.navigation_buttons[graph_type] = button
 
-        sidebar_layout.addStretch(1)
-        about_button = QPushButton("About this project")
-        about_button.setObjectName("aboutButton")
-        about_button.setMinimumHeight(42)
-        about_button.clicked.connect(self.show_about_dialog)
-        sidebar_layout.addWidget(about_button)
-        root_layout.addWidget(sidebar)
+        sidebar_layout.addStretch()
 
+        about_button = QPushButton("About this project")
+        about_button.setStyleSheet(
+            "background-color: #1e293b; color: #e2e8f0; font-size: 13px; "
+            "font-weight: bold; padding: 11px; border-radius: 8px;"
+        )
+        about_button.clicked.connect(self.show_about_window)
+        sidebar_layout.addWidget(about_button)
+
+        sidebar.setLayout(sidebar_layout)
+
+        # ----- Content Area -----
         content = QWidget()
-        content.setObjectName("contentArea")
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(30, 26, 30, 28)
-        content_layout.setSpacing(18)
+        content.setStyleSheet("background-color: #f4f6fa;")
 
         page_title = QLabel("Flight analysis")
-        page_title.setObjectName("pageTitle")
-        content_layout.addWidget(page_title)
+        page_title.setStyleSheet("font-size: 24px; font-weight: bold; color: #0f172a;")
 
         page_description = QLabel(
             f"Part A (t = 0.5 s): v = {self.part_a['v']:.2f} m/s  |  "
-            f"Part B: Max altitude = {np.max(self.results['h']):.1f} m"
+            f"Part B: Max altitude = {self.results['max_h']:.1f} m"
         )
-        page_description.setObjectName("pageDescription")
-        content_layout.addWidget(page_description)
+        page_description.setStyleSheet("font-size: 14px; color: #475569; font-weight: bold;")
 
-        chart_frame = QFrame()
-        chart_frame.setObjectName("chartFrame")
-        chart_layout = QVBoxLayout(chart_frame)
+        chart_box = QWidget()
+        chart_box.setStyleSheet(
+            "background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;"
+        )
+
+        self.fig, self.ax = plt.subplots(1, 1)
+        self.canvas = FigureCanvasQTAgg(self.fig)
+        self.toolbar = NavigationToolbar2QT(self.canvas, chart_box)
+
+        chart_layout = QVBoxLayout()
         chart_layout.setContentsMargins(12, 12, 12, 12)
         chart_layout.setSpacing(6)
-
-        self.figure = Figure(figsize=(8, 5), dpi=100, facecolor="#ffffff")
-        self.canvas = FigureCanvasQTAgg(self.figure)
-        self.toolbar = NavigationToolbar2QT(self.canvas, chart_frame)
         chart_layout.addWidget(self.toolbar)
         chart_layout.addWidget(self.canvas, 1)
-        content_layout.addWidget(chart_frame, 1)
-        root_layout.addWidget(content, 1)
+        chart_box.setLayout(chart_layout)
 
-        self.plot_graph("altitude")
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(30, 26, 30, 28)
+        content_layout.setSpacing(18)
+        content_layout.addWidget(page_title)
+        content_layout.addWidget(page_description)
+        content_layout.addWidget(chart_box, 1)
+        content.setLayout(content_layout)
+
+        # ----- Root Layout -----
+        root_layout = QHBoxLayout()
+        root_layout.setContentsMargins(0, 0, 0, 0)
+        root_layout.setSpacing(0)
+        root_layout.addWidget(sidebar, 1)
+        root_layout.addWidget(content, 4)
+
+        root.setLayout(root_layout)
+
+    def graph_button_clicked(self):
+        clicked_text = self.sender().text()
+        for key in self.GRAPH_KEYS:
+            if self.GRAPHS[key]["button"] == clicked_text:
+                self.plot_graph(key)
 
     def plot_graph(self, graph_type):
-        """ציור הגרף הנבחר מתוך תוצאות הסימולציה."""
         graph = self.GRAPHS[graph_type]
 
         t = self.results["t"]
@@ -373,41 +393,25 @@ class RocketTrajectoryWindow(QMainWindow):
         else:
             x_values, y_values = t, m
 
-        self.figure.clear()
-        axes = self.figure.add_subplot(111)
-        axes.plot(x_values, y_values, color="#3977e8", linewidth=2.5)
-        axes.set_title(graph["title"], pad=16, fontweight="bold")
-        axes.set_xlabel(graph["xlabel"])
-        axes.set_ylabel(graph["ylabel"])
-        axes.grid(True, color="#e7ebf2", linewidth=0.8)
-        axes.set_xlim(left=0)
-        axes.set_ylim(bottom=0)
-        axes.margins(x=0.04, y=0.08)
-        self.figure.tight_layout()
-        self.canvas.draw_idle()
+        self.ax.clear()
+        self.ax.plot(x_values, y_values, color="#3977e8", linewidth=2.5)
+        self.ax.set_title(graph["title"])
+        self.ax.set_xlabel(graph["xlabel"])
+        self.ax.set_ylabel(graph["ylabel"])
+        self.canvas.draw()
 
-        for key, button in self.navigation_buttons.items():
-            button.setChecked(key == graph_type)
+        for key in self.GRAPH_KEYS:
+            self.navigation_buttons[key].setChecked(key == graph_type)
 
-    def show_about_dialog(self):
-        """פתיחת חלון האודות."""
-        AboutDialog(self).exec()
+    def show_about_window(self):
+        self.about_window.show()
 
-
-def main():
-    """הפעלת האפליקציה וטעינת קובץ העיצוב style.qss."""
-    app = QApplication(sys.argv)
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    stylesheet_path = os.path.join(base_dir, "style.qss")
-
-    if os.path.isfile(stylesheet_path):
-        with open(stylesheet_path, "r", encoding="utf-8") as file:
-            app.setStyleSheet(file.read())
-
-    window = RocketTrajectoryWindow()
-    window.show()
-    sys.exit(app.exec())
+    def closeEvent(self, event):
+        self.about_window.close()
 
 
 if __name__ == "__main__":
-    main()
+    app = QApplication()
+    window = RocketTrajectoryWindow()
+    window.show()
+    app.exec()
