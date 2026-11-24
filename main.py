@@ -4,11 +4,9 @@ The calculation functions in this module are intentional placeholders. Replace
 their TODO sections with the assignment's physics and numerical methods.
 """
 
-from __future__ import annotations
-
+import math
+import os
 import sys
-from pathlib import Path
-from typing import Any
 
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
@@ -27,105 +25,170 @@ from PySide6.QtWidgets import (
 )
 
 
-def calculate_atmosphere(h: float) -> tuple[float, float]:
-    """Return placeholder temperature and pressure for altitude ``h``.
+def calculate_atmosphere(h):
+    """חישוב טמפרטורה, לחץ וצפיפות אוויר כפונקציה של הגובה h במטרים."""
+    g0 = 9.81
+    R = 287.0
 
-    TODO: Implement the assignment's atmospheric model separately for the
-    troposphere below 11 km and the regime at/above 11 km.
-    """
-    if h < 11_000:
-        # TODO: Replace with the below-11-km atmospheric equations.
-        temperature, pressure = 0.0, 0.0
+    if h < 11000:
+        T = 288.0 - 0.0064864 * h
+        P_atm = (1.0 - 2.256944e-5 * h) ** 5.2586
     else:
-        # TODO: Replace with the at/above-11-km atmospheric equations.
-        temperature, pressure = 0.0, 0.0
-    return temperature, pressure
+        h_km = h / 1000.0
+        if h < 20000:
+            T = 216.65
+        elif h < 33000:
+            T = 216.65 + 0.99 * (h_km - 20.0)
+        else:
+            T = 139.7 + 2.7661 * h_km
+
+        P_atm = math.exp((-g0 * (h - 1000.0)) / (R * T))
+
+    # המרת לחץ מאטמוספירות לפסקל וחישוב צפיפות
+    P_pa = P_atm * 101325.0
+    rho = P_pa / (R * T)
+    return T, P_atm, rho
 
 
 def calculate_single_step(
-    h0: float = 2000.0,
-    Isp: float = 260.0,
-    theta: float = 50.0,
-    m_dot: float = 15.0,
-    CD: float = 0.2,
-    m0: float = 200.0,
-    Af: float = 0.1,
-    M: float = 1.0,
-    tb: float = 7.0,
-    dt: float = 0.5,
-) -> dict[str, Any]:
-    """Placeholder for Part A's single calculation at ``t = 0.5 s``.
+    h0=2000.0,
+    Isp=260.0,
+    theta=50.0,
+    m_dot=15.0,
+    CD=0.2,
+    m0=200.0,
+    Af=0.1,
+    M=1.0,
+    tb=7.0,
+    dt=0.5,
+):
+    """סעיף א': חישוב מצב הטיל לאחר צעד יחיד של 0.5 שניות לפי נתוני ההתחלה."""
+    g0 = 9.81
+    R = 287.0
+    gamma = 1.4
 
-    The defaults are the assignment's initial conditions. TODO: Implement one
-    time-step calculation using the applicable propulsion and flight equations.
-    """
-    # TODO: Calculate the state at dt from h0, Isp, theta, m_dot, CD, m0,
-    # Af, M, and tb. These values deliberately do not model rocket physics.
+    # תנאי התחלה
+    T0, P0, rho0 = calculate_atmosphere(h0)
+    a0 = math.sqrt(gamma * R * T0)
+    v0 = M * a0
+
+    theta_rad = math.radians(theta)
+    vx0 = v0 * math.cos(theta_rad)
+    vy0 = v0 * math.sin(theta_rad)
+
+    # כוחות ברגע ההתחלה
+    thrust = Isp * m_dot * g0
+    drag = 0.5 * rho0 * (v0**2) * CD * Af
+
+    # תאוצות
+    ax = ((thrust - drag) * math.cos(theta_rad)) / m0
+    ay = ((thrust - drag) * math.sin(theta_rad)) / m0 - g0
+
+    # עדכון לאחר צעד יחיד dt = 0.5 s
+    vx = vx0 + ax * dt
+    vy = vy0 + ay * dt
+    v = math.sqrt(vx**2 + vy**2)
+    x = vx0 * dt
+    h = h0 + vy0 * dt
+    m = m0 - m_dot * dt
+
     return {
         "t": dt,
-        "h": h0,
-        "x": 0.0,
-        "v": 0.0,
-        "m": m0,
+        "h": h,
+        "x": x,
+        "v": v,
+        "vx": vx,
+        "vy": vy,
+        "m": m,
     }
 
 
 def simulate_trajectory(
-    h0: float = 2000.0,
-    Isp: float = 260.0,
-    theta: float = 50.0,
-    m_dot: float = 15.0,
-    CD: float = 0.2,
-    m0: float = 200.0,
-    Af: float = 0.1,
-    M: float = 1.0,
-    tb: float = 7.0,
-    dt: float = 0.01,
-    t_final: float = 30.0,
-) -> dict[str, np.ndarray]:
-    """Return placeholder time-series arrays for Part B.
+    h0=2000.0,
+    Isp=260.0,
+    theta=50.0,
+    m_dot=15.0,
+    CD=0.2,
+    m0=200.0,
+    Af=0.1,
+    M=1.0,
+    tb=7.0,
+    dt=0.01,
+):
+    """סעיף ב': חישוב מסלול הטיל באמצעות לולאת while עד הפגיעה בקרקע."""
+    g0 = 9.81
+    R = 287.0
+    gamma = 1.4
 
-    TODO: Implement the numerical integration, applying powered-flight
-    equations until burnout at ``tb`` and coast/descent equations afterward.
-    The loop below only demonstrates the requested time and burn/coast
-    structure; its held-constant state values are not a physical simulation.
-    """
-    times = [0.0]
-    altitudes = [h0]
-    distances = [0.0]
-    velocities = [0.0]
-    masses = [m0]
+    # תנאי התחלה ברגע t = 0
+    T0, P0, rho0 = calculate_atmosphere(h0)
+    a0 = math.sqrt(gamma * R * T0)
+    v0 = M * a0
+
+    theta_rad = math.radians(theta)
+    vx = v0 * math.cos(theta_rad)
+    vy = v0 * math.sin(theta_rad)
 
     t = 0.0
-    while t < t_final:
-        if t < tb:
-            # TODO: Update the state during engine burn.
-            pass
-        else:
-            # TODO: Update the state after burnout.
-            pass
+    h = h0
+    x = 0.0
+    m = m0
 
-        t = min(t + dt, t_final)
+    # רשימות לשמירת הנתונים לאורך המסלול
+    times = [t]
+    altitudes = [h]
+    distances = [x]
+    velocities = [v0]
+    masses = [m]
+
+    # לולאת while הרצה כל עוד הטיל באוויר (h > 0)
+    while h > 0 and t < 1000.0:
+        v = math.sqrt(vx**2 + vy**2)
+        T, P_atm, rho = calculate_atmosphere(h)
+
+        # בדיקה האם המנוע עדיין בוער או שכבר כבה
+        if round(t, 6) < tb:
+            thrust = Isp * m_dot * g0
+            dm = m_dot * dt
+        else:
+            thrust = 0.0
+            dm = 0.0
+
+        drag = 0.5 * rho * (v**2) * CD * Af
+
+        # כיוון הדחף והגרר הוא לאורך וקטור המהירות (cos = vx/v, sin = vy/v)
+        ax = ((thrust - drag) * (vx / v)) / m
+        ay = ((thrust - drag) * (vy / v)) / m - g0
+
+        # נתוני סיום הצעד יהוו את נתוני ההתחלה לצעד הבא
+        x = x + vx * dt
+        h = h + vy * dt
+        vx = vx + ax * dt
+        vy = vy + ay * dt
+        m = m - dm
+        t = t + dt
+
+        v_new = math.sqrt(vx**2 + vy**2)
+
         times.append(t)
-        # TODO: Append the newly calculated state instead of these placeholders.
-        altitudes.append(h0)
-        distances.append(0.0)
-        velocities.append(0.0)
-        masses.append(m0)
+        altitudes.append(h)
+        distances.append(x)
+        velocities.append(v_new)
+        masses.append(m)
 
     return {
-        "t": np.asarray(times),
-        "h": np.asarray(altitudes),
-        "x": np.asarray(distances),
-        "v": np.asarray(velocities),
-        "m": np.asarray(masses),
+        "t": np.array(times),
+        "h": np.array(altitudes),
+        "x": np.array(distances),
+        "v": np.array(velocities),
+        "m": np.array(masses),
     }
 
 
 class AboutDialog(QDialog):
-    """Project information dialog with an external repository link."""
+    """חלון מידע על הפרויקט עם קישור ל-GitHub."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("About Rocket Trajectory")
         self.setModal(True)
@@ -163,7 +226,7 @@ class AboutDialog(QDialog):
 
 
 class RocketTrajectoryWindow(QMainWindow):
-    """Main window containing graph navigation and an interactive plot."""
+    """החלון הראשי המציג את תפריט הגרפים ואת הגרף האינטראקטיבי."""
 
     GRAPHS = {
         "altitude": {
@@ -180,7 +243,7 @@ class RocketTrajectoryWindow(QMainWindow):
         },
         "trajectory": {
             "button": "Rocket Trajectory",
-            "title": "Rocket Trajectory",
+            "title": "Rocket Trajectory (h vs. x)",
             "xlabel": "Horizontal distance, x [m]",
             "ylabel": "Altitude, h [m]",
         },
@@ -198,11 +261,17 @@ class RocketTrajectoryWindow(QMainWindow):
         },
     }
 
-    def __init__(self) -> None:
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Rocket Propulsion | Trajectory Simulator")
         self.resize(1180, 760)
         self.setMinimumSize(900, 600)
+
+        # הרצת החישובים של סעיף א' וסעיף ב' בעת עליית התוכנית
+        self.part_a = calculate_single_step()
+        self.results = simulate_trajectory()
+
+        print(f"Part A (t = 0.5 s): Velocity = {self.part_a['v']:.2f} m/s")
 
         root = QWidget()
         root_layout = QHBoxLayout(root)
@@ -230,16 +299,14 @@ class RocketTrajectoryWindow(QMainWindow):
         sidebar_layout.addWidget(nav_heading)
         sidebar_layout.addSpacing(4)
 
-        self.navigation_buttons: dict[str, QPushButton] = {}
+        self.navigation_buttons = {}
         for graph_type, graph in self.GRAPHS.items():
             button = QPushButton(graph["button"])
             button.setObjectName("navButton")
             button.setCheckable(True)
             button.setMinimumHeight(44)
             button.clicked.connect(
-                lambda checked=False, selected=graph_type: self.plot_temporary_graph(
-                    selected
-                )
+                lambda checked, selected=graph_type: self.plot_graph(selected)
             )
             sidebar_layout.addWidget(button)
             self.navigation_buttons[graph_type] = button
@@ -263,7 +330,8 @@ class RocketTrajectoryWindow(QMainWindow):
         content_layout.addWidget(page_title)
 
         page_description = QLabel(
-            "Explore the simulated rocket flight using the graph controls."
+            f"Part A (t = 0.5 s): v = {self.part_a['v']:.2f} m/s  |  "
+            f"Part B: Max altitude = {np.max(self.results['h']):.1f} m"
         )
         page_description.setObjectName("pageDescription")
         content_layout.addWidget(page_description)
@@ -282,28 +350,28 @@ class RocketTrajectoryWindow(QMainWindow):
         content_layout.addWidget(chart_frame, 1)
         root_layout.addWidget(content, 1)
 
-        self.plot_temporary_graph("altitude")
+        self.plot_graph("altitude")
 
-    def plot_temporary_graph(self, graph_type: str) -> None:
-        """Draw temporary NumPy data for the selected graph.
-
-        Replace this method's sample data and plotting code with the real
-        simulation results when the physics functions are implemented.
-        """
+    def plot_graph(self, graph_type):
+        """ציור הגרף הנבחר מתוך תוצאות הסימולציה."""
         graph = self.GRAPHS[graph_type]
-        sample_time = np.linspace(0.0, 10.0, 101)
+
+        t = self.results["t"]
+        h = self.results["h"]
+        x = self.results["x"]
+        v = self.results["v"]
+        m = self.results["m"]
 
         if graph_type == "altitude":
-            x_values, y_values = sample_time, 2000.0 + 120.0 * sample_time
+            x_values, y_values = t, h
         elif graph_type == "distance":
-            x_values, y_values = sample_time, 35.0 * sample_time
+            x_values, y_values = t, x
         elif graph_type == "trajectory":
-            x_values = 35.0 * sample_time
-            y_values = 2000.0 + 120.0 * sample_time
+            x_values, y_values = x, h
         elif graph_type == "velocity":
-            x_values, y_values = sample_time, 40.0 + 8.0 * sample_time
+            x_values, y_values = t, v
         else:
-            x_values, y_values = sample_time, 200.0 - 15.0 * sample_time
+            x_values, y_values = t, m
 
         self.figure.clear()
         axes = self.figure.add_subplot(111)
@@ -321,23 +389,25 @@ class RocketTrajectoryWindow(QMainWindow):
         for key, button in self.navigation_buttons.items():
             button.setChecked(key == graph_type)
 
-    def show_about_dialog(self) -> None:
-        """Open the project information dialog."""
+    def show_about_dialog(self):
+        """פתיחת חלון האודות."""
         AboutDialog(self).exec()
 
 
-def main() -> int:
-    """Start the application and load its adjacent Qt stylesheet."""
+def main():
+    """הפעלת האפליקציה וטעינת קובץ העיצוב style.qss."""
     app = QApplication(sys.argv)
-    stylesheet_path = Path(__file__).with_name("style.qss")
-    if not stylesheet_path.is_file():
-        raise FileNotFoundError(f"Stylesheet not found: {stylesheet_path}")
-    app.setStyleSheet(stylesheet_path.read_text(encoding="utf-8"))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    stylesheet_path = os.path.join(base_dir, "style.qss")
+
+    if os.path.isfile(stylesheet_path):
+        with open(stylesheet_path, "r", encoding="utf-8") as file:
+            app.setStyleSheet(file.read())
 
     window = RocketTrajectoryWindow()
     window.show()
-    return app.exec()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()
