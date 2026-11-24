@@ -2,6 +2,10 @@ QMainWindow#mainWindow {
     background-color: #f4f6fa;
 }
 
+QWidget#aboutWindow {
+    background-color: #ffffff;
+}
+
 QWidget#contentArea {
     background-color: #f4f6fa;
 }
@@ -115,22 +119,35 @@ QLabel#repositoryLink a {
     color: #3977e8;
 }
 
-QPushButton#secondaryButton {
-    color: #0f172a;
-    background-color: #e2e8f0;
-    border: 1px solid #e2e8f0;
+QPushButton#aboutCloseButton,
+QDialog QPushButton#aboutCloseButton {
+    color: #ffffff;
+    background-color: #1e293b;
+    border: 1px solid #0f172a;
     border-radius: 6px;
     padding: 8px 18px;
     font-weight: bold;
 }
 
-QPushButton#secondaryButton:hover,
-QPushButton#secondaryButton:pressed,
-QPushButton#secondaryButton:checked,
-QPushButton#secondaryButton:focus {
+QPushButton#aboutCloseButton:focus,
+QDialog QPushButton#aboutCloseButton:focus {
     color: #ffffff;
-    background-color: #3977e8;
-    border-color: #3977e8;
+    background-color: #334155;
+    border-color: #475569;
+}
+
+QPushButton#aboutCloseButton:hover,
+QDialog QPushButton#aboutCloseButton:hover {
+    color: #ffffff;
+    background-color: #0f172a;
+    border: 1px solid #020617;
+}
+
+QPushButton#aboutCloseButton:pressed,
+QDialog QPushButton#aboutCloseButton:pressed {
+    color: #ffffff;
+    background-color: #020617;
+    border: 1px solid #020617;
 }
 
 QToolBar#plotToolbar {

@@ -173,12 +173,12 @@ class AboutWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.setObjectName("aboutWindow")
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("About Rocket Trajectory")
         self.setGeometry(480, 260, 410, 220)
-        self.setStyleSheet("background-color: #ffffff;")
 
         heading = QLabel("Rocket Propulsion")
         heading.setStyleSheet("font-size: 20px; font-weight: bold; color: #0f172a;")
@@ -201,7 +201,7 @@ class AboutWindow(QWidget):
         repository.setStyleSheet("font-size: 12px; color: #3977e8; font-weight: bold;")
 
         close_button = QPushButton("Close")
-        close_button.setObjectName("secondaryButton")
+        close_button.setObjectName("aboutCloseButton")
         close_button.clicked.connect(self.close_clicked)
 
         button_layout = QHBoxLayout()
@@ -396,7 +396,7 @@ class RocketTrajectoryWindow(QMainWindow):
             x_values, y_values = t, m
 
         self.ax.clear()
-        self.ax.plot(x_values, y_values, color="#3977e8", linewidth=2.5)
+        self.ax.plot(x_values, y_values, color="#3977e8", linewidth=2.0)
         self.ax.set_title(graph["title"])
         self.ax.set_xlabel(graph["xlabel"])
         self.ax.set_ylabel(graph["ylabel"])
