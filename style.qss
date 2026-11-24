@@ -49,10 +49,12 @@ QPushButton#navButton:hover {
     background-color: #243552;
 }
 
-QPushButton#navButton:checked {
+QPushButton#navButton:checked,
+QPushButton#navButton:pressed,
+QPushButton#navButton:focus {
     color: #ffffff;
     background-color: #3977e8;
-    border-color: #4a86f2;
+    border: 1px solid #3977e8;
     font-weight: 600;
 }
 
@@ -68,6 +70,13 @@ QPushButton#aboutButton {
 
 QPushButton#aboutButton:hover {
     background-color: #304566;
+}
+
+QPushButton#aboutButton:pressed,
+QPushButton#aboutButton:focus {
+    color: #ffffff;
+    background-color: #3977e8;
+    border-color: #3977e8;
 }
 
 QLabel#pageTitle {
@@ -105,15 +114,20 @@ QLabel a {
 }
 
 QPushButton#secondaryButton {
-    color: #ffffff;
-    background-color: #3977e8;
-    border: none;
+    color: #0f172a;
+    background-color: #e2e8f0;
+    border: 1px solid #e2e8f0;
     border-radius: 6px;
     padding: 8px 18px;
+    font-weight: bold;
 }
 
-QPushButton#secondaryButton:hover {
-    background-color: #2e68d1;
+QPushButton#secondaryButton:hover,
+QPushButton#secondaryButton:pressed,
+QPushButton#secondaryButton:focus {
+    color: #ffffff;
+    background-color: #3977e8;
+    border-color: #3977e8;
 }
 
 QToolBar {
@@ -124,10 +138,21 @@ QToolBar {
 
 QToolBar QToolButton {
     background-color: transparent;
+    border: 1px solid transparent;
     border-radius: 5px;
     padding: 4px;
+    min-width: 28px;
+    min-height: 28px;
+    icon-size: 16px;
 }
 
 QToolBar QToolButton:hover {
     background-color: #edf2fa;
+}
+
+QToolBar QToolButton:checked,
+QToolBar QToolButton:pressed,
+QToolBar QToolButton:focus {
+    background-color: #3977e8;
+    border-color: #2e68d1;
 }

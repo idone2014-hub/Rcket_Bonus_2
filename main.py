@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
@@ -192,10 +194,7 @@ class AboutWindow(QWidget):
         repository.setStyleSheet("font-size: 12px; color: #3977e8; font-weight: bold;")
 
         close_button = QPushButton("Close")
-        close_button.setStyleSheet(
-            "background-color: #e2e8f0; color: #0f172a; font-weight: bold; "
-            "padding: 8px 18px; border-radius: 6px;"
-        )
+        close_button.setObjectName("secondaryButton")
         close_button.clicked.connect(self.close_clicked)
 
         button_layout = QHBoxLayout()
@@ -292,19 +291,12 @@ class RocketTrajectoryWindow(QMainWindow):
         sidebar_layout.addWidget(subtitle)
         sidebar_layout.addWidget(nav_heading)
 
-        nav_style = (
-            "QPushButton { background-color: #1e293b; color: #cbd5e1; font-size: 13px; "
-            "padding: 12px; border-radius: 8px; }"
-            "QPushButton:checked { background-color: #3977e8; color: #ffffff; "
-            "font-weight: bold; }"
-        )
-
         self.navigation_buttons = {}
         for graph_type in self.GRAPH_KEYS:
             graph = self.GRAPHS[graph_type]
             button = QPushButton(graph["button"])
+            button.setObjectName("navButton")
             button.setCheckable(True)
-            button.setStyleSheet(nav_style)
             button.clicked.connect(self.graph_button_clicked)
             sidebar_layout.addWidget(button)
             self.navigation_buttons[graph_type] = button
@@ -312,10 +304,7 @@ class RocketTrajectoryWindow(QMainWindow):
         sidebar_layout.addStretch()
 
         about_button = QPushButton("About this project")
-        about_button.setStyleSheet(
-            "background-color: #1e293b; color: #e2e8f0; font-size: 13px; "
-            "font-weight: bold; padding: 11px; border-radius: 8px;"
-        )
+        about_button.setObjectName("aboutButton")
         about_button.clicked.connect(self.show_about_window)
         sidebar_layout.addWidget(about_button)
 
@@ -398,6 +387,9 @@ class RocketTrajectoryWindow(QMainWindow):
         self.ax.set_title(graph["title"])
         self.ax.set_xlabel(graph["xlabel"])
         self.ax.set_ylabel(graph["ylabel"])
+        self.ax.grid(True)
+        self.ax.set_xlim(left=0)
+        self.ax.set_ylim(bottom=0)
         self.canvas.draw()
 
         for key in self.GRAPH_KEYS:
@@ -412,6 +404,8 @@ class RocketTrajectoryWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication()
+    with Path(__file__).with_name("style.qss").open(encoding="utf-8") as stylesheet:
+        app.setStyleSheet(stylesheet.read())
     window = RocketTrajectoryWindow()
     window.show()
     app.exec()
