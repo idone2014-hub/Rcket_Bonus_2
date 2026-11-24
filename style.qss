@@ -1,0 +1,133 @@
+QMainWindow {
+    background-color: #f4f6fa;
+}
+
+QWidget#contentArea {
+    background-color: #f4f6fa;
+}
+
+QFrame#sidebar {
+    background-color: #17233b;
+    border: none;
+}
+
+QLabel#brandLabel {
+    color: #ffffff;
+    font-size: 23px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+QLabel#sidebarSubtitle {
+    color: #95a4bf;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    padding-bottom: 30px;
+}
+
+QLabel#sectionLabel {
+    color: #8493ad;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+QPushButton#navButton {
+    color: #c8d1e0;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 9px 11px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+QPushButton#navButton:hover {
+    color: #ffffff;
+    background-color: #243552;
+}
+
+QPushButton#navButton:checked {
+    color: #ffffff;
+    background-color: #3977e8;
+    border-color: #4a86f2;
+    font-weight: 600;
+}
+
+QPushButton#aboutButton {
+    color: #d3dced;
+    background-color: #243552;
+    border: 1px solid #344562;
+    border-radius: 8px;
+    padding: 9px 12px;
+    text-align: left;
+    font-size: 12px;
+}
+
+QPushButton#aboutButton:hover {
+    background-color: #304566;
+}
+
+QLabel#pageTitle {
+    color: #17233b;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+QLabel#pageDescription {
+    color: #718096;
+    font-size: 13px;
+    padding-bottom: 4px;
+}
+
+QFrame#chartFrame {
+    background-color: #ffffff;
+    border: 1px solid #e5e9f0;
+    border-radius: 12px;
+}
+
+QLabel#aboutHeading {
+    color: #17233b;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+QLabel#aboutDescription {
+    color: #58677f;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+QLabel a {
+    color: #3977e8;
+}
+
+QPushButton#secondaryButton {
+    color: #ffffff;
+    background-color: #3977e8;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 18px;
+}
+
+QPushButton#secondaryButton:hover {
+    background-color: #2e68d1;
+}
+
+QToolBar {
+    background-color: #ffffff;
+    border: none;
+    spacing: 5px;
+}
+
+QToolBar QToolButton {
+    background-color: transparent;
+    border-radius: 5px;
+    padding: 4px;
+}
+
+QToolBar QToolButton:hover {
+    background-color: #edf2fa;
+}
